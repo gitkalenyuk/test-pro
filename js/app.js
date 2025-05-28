@@ -3,6 +3,21 @@ console.log("app.js loaded");
 document.addEventListener('DOMContentLoaded', async () => { // Make async
     console.log("DOM fully loaded and parsed");
 
+    // Declare all key DOM elements at the top of the scope
+    const pdfUploadElement = document.getElementById('pdfUpload');
+    const customPdfUploadButton = document.getElementById('customPdfUploadButton');
+    
+    const marginInput = document.getElementById('marginInput');
+    const marginSlider = document.getElementById('marginSlider');
+    const undoButton = document.getElementById('undoButton');
+    const downloadPdfButton = document.getElementById('downloadPdfButton');
+    
+    const initialColorPicker = document.getElementById('initialColorPicker');
+    const editedColorPicker = document.getElementById('editedColorPicker');
+    const savedColorPicker = document.getElementById('savedColorPicker');
+    const priceFontSizeInput = document.getElementById('priceFontSizeInput');
+    const languageSelector = document.getElementById('languageSelector');
+
     // Ensure PDF.js worker is configured (already in index.html, but good to double-check)
     if (typeof pdfjsLib !== 'undefined') {
         // pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
@@ -36,8 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => { // Make async
     const pdfViewer = new PDFViewer(viewerOptions);
     // pdfViewer instance now holds references to all its UI elements based on IDs passed.
 
-    // Event listener for file upload
-    const pdfUploadElement = document.getElementById('pdfUpload');
+    // Event listener for file upload (using pre-declared pdfUploadElement)
     if (pdfUploadElement) {
         pdfUploadElement.addEventListener('change', (event) => {
             const file = event.target.files[0];
@@ -101,10 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => { // Make async
         // Example: translator might need to run translatePage after dynamic content is loaded,
         // but this example focuses on PDF viewer.
 
-        // Margin input functionality
-        const marginInput = document.getElementById('marginInput');
-        const marginSlider = document.getElementById('marginSlider');
-
+        // Margin input functionality (using pre-declared marginInput, marginSlider)
         if (marginInput && marginSlider && window.appSettings) {
             const initialMargin = window.appSettings.getMarginPercentage();
             marginInput.value = initialMargin;
@@ -133,8 +144,7 @@ document.addEventListener('DOMContentLoaded', async () => { // Make async
             console.warn("Margin input elements or appSettings not found.");
         }
 
-        // Undo button functionality
-        const undoButton = document.getElementById('undoButton');
+        // Undo button functionality (using pre-declared undoButton)
         if (undoButton && pdfViewer) { // pdfViewer should be available here
             undoButton.addEventListener('click', () => {
                 pdfViewer.undoLastEdit();
@@ -144,8 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => { // Make async
             console.warn("Undo button or pdfViewer instance not found.");
         }
 
-        // Download Modified PDF button functionality
-        const downloadPdfButton = document.getElementById('downloadPdfButton');
+        // Download Modified PDF button functionality (using pre-declared downloadPdfButton)
         if (downloadPdfButton && pdfViewer) {
             downloadPdfButton.addEventListener('click', () => {
                 pdfViewer.handleDownloadPdf();
@@ -155,12 +164,7 @@ document.addEventListener('DOMContentLoaded', async () => { // Make async
             console.warn("Download PDF button or pdfViewer instance not found.");
         }
 
-        // Settings UI elements
-        const initialColorPicker = document.getElementById('initialColorPicker');
-        const editedColorPicker = document.getElementById('editedColorPicker');
-        const savedColorPicker = document.getElementById('savedColorPicker');
-        const priceFontSizeInput = document.getElementById('priceFontSizeInput');
-
+        // Settings UI elements (using pre-declared variables)
         if (window.appSettings) {
             if (initialColorPicker) {
                 initialColorPicker.value = window.appSettings.getInitialColor();
@@ -195,8 +199,72 @@ document.addEventListener('DOMContentLoaded', async () => { // Make async
             console.warn("appSettings not found. Cannot initialize settings UI.");
         }
 
+        // Initialize Translator and Language Selector (using pre-declared languageSelector)
+        if (window.appSettings) { // This 'if' is redundant if the outer one is already checked, but safe
+            const currentSavedLang = window.appSettings.getUiLanguage();
+            window.translator = new Translator(currentSavedLang); // Pass initial language
+            await window.translator.loadTranslations(currentSavedLang); // Initial load
+
+            if (languageSelector) {
+                languageSelector.value = currentSavedLang; // Set dropdown to saved/initial language
+                languageSelector.addEventListener('change', async (event) => {
+                    const newLang = event.target.value;
+                    await window.translator.changeLanguage(newLang);
+                    if (window.uiLogger) window.uiLogger.info(`Language changed to: ${newLang}.`);
+                });
+                console.log("Language selector initialized and event listener set up.");
+            } else {
+                console.warn("Language selector element 'languageSelector' not found.");
+            }
+            
+            // Instantiate UiLogger (moved here to ensure translator is ready for any logged messages)
+            window.uiLogger = new UiLogger('uiLogConsole');
+            if (window.uiLogger && window.uiLogger.logArea) { // Check if uiLogger itself and its logArea are valid
+                 window.uiLogger.info("Application initialized. UI Logger ready.");
+                 window.uiLogger.info("Application settings loaded."); // Log after settings and translator are ready
+            } else {
+                console.error("Failed to initialize UiLogger or its logArea is missing.");
+            }
+
+        } else {
+            // This block might be less relevant now that appSettings is checked earlier for most UI setup
+            console.error("appSettings not found. Cannot initialize Translator, language selector, or UI Logger properly.");
+            // Fallback if settings aren't there - create a default translator
+            window.translator = new Translator('uk'); // Default to 'uk'
+            await window.translator.loadTranslations('uk'); // Attempt to load default translations
+            
+            // Fallback UiLogger
+            window.uiLogger = new UiLogger('uiLogConsole');
+            if (window.uiLogger && window.uiLogger.logArea) {
+                window.uiLogger.info("Application initialized with fallback settings. UI Logger ready.");
+            } else {
+                 console.error("Failed to initialize UiLogger or its logArea is missing during fallback.");
+            }
+        }
+
     } else {
         console.warn("Settings or Translator modules not fully initialized or available on window global.");
+        // Even if settings module failed, try to initialize translator and logger for basic UI text
+        if (!window.translator) { // Check if translator was initialized in the fallback above
+            window.translator = new Translator('uk');
+            await window.translator.loadTranslations('uk');
+            console.warn("Translator initialized with default 'uk' due to missing settings module at expected time.");
+        }
+        if (!window.uiLogger) {
+            window.uiLogger = new UiLogger('uiLogConsole');
+            if (window.uiLogger && window.uiLogger.logArea) {
+                 window.uiLogger.info("UI Logger initialized with fallback settings due to missing settings module at expected time.");
+            } else {
+                console.error("Failed to initialize UiLogger or its logArea is missing during settings module fallback.");
+            }
+        }
+    }
+    
+    // Custom file upload button wiring (using pre-declared customPdfUploadButton and pdfUploadElement)
+    if (customPdfUploadButton && pdfUploadElement) {
+        customPdfUploadButton.addEventListener('click', () => {
+            pdfUploadElement.click(); // Trigger click on the hidden file input
+        });
     }
 
     console.log("app.js: Event listeners set up.");
