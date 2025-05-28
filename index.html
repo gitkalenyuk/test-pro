@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-translate-key="appTitle">PDF Price Editor</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="pdfTopBar">
+        <span id="pdfFilename" data-translate-key="pdfFilenameDefault">No file loaded</span>
+        <button id="prevPage" data-translate-key="prevPageButton">Previous</button>
+        <input type="number" id="currentPage" value="1" min="1" style="width: 40px;" title="Current Page"> / <span id="totalPages">0</span>
+        <button id="nextPage" data-translate-key="nextPageButton">Next</button>
+        <button id="zoomOut" data-translate-key="zoomOutButton" title="Zoom Out">-</button>
+        <input type="text" id="zoomPercentage" value="100%" style="width: 50px;" title="Zoom Percentage">
+        <button id="zoomIn" data-translate-key="zoomInButton" title="Zoom In">+</button>
+    </div>
+    <div id="appToolbar">
+        <label for="pdfUpload" data-translate-key="uploadPdfLabel" id="uploadPdfLabelElement" style="display: none;">Upload PDF:</label> <!-- Hide this label, use button text -->
+        <input type="file" id="pdfUpload" accept="application/pdf" title="Upload PDF" style="display: none;"> <!-- Hide default input -->
+        <button id="customPdfUploadButton" data-translate-key="uploadPdfLabel" title="Upload PDF">Upload PDF</button> <!-- Custom button -->
+        <label for="marginInput" style="margin-left: 10px;" data-translate-key="marginLabel">Margin (%):</label>
+        <input type="number" id="marginInput" min="0" max="100" value="0" style="width: 60px;" title="Margin Percentage">
+        <input type="range" id="marginSlider" min="0" max="100" value="0" style="width: 100px; vertical-align: middle;" title="Margin Slider">
+        <button id="undoButton" style="margin-left: 10px;" data-translate-key="undoButton">Undo</button>
+        <button id="downloadPdfButton" style="margin-left: 10px;" data-translate-key="downloadPdfButton">Download Modified PDF</button>
+        
+        <span style="margin-left: 15px;"></span> <!-- Spacer -->
+
+        <label for="initialColorPicker" data-translate-key="initialColorLabel">Initial Color:</label>
+        <input type="color" id="initialColorPicker" value="#FFFF00" title="Initial Price Color">
+        
+        <label for="editedColorPicker" style="margin-left: 5px;" data-translate-key="editedColorLabel">Edited Color:</label>
+        <input type="color" id="editedColorPicker" value="#00FF00" title="Edited Price Color">
+        
+        <label for="savedColorPicker" style="margin-left: 5px;" data-translate-key="savedColorLabel">Saved Color:</label>
+        <input type="color" id="savedColorPicker" value="#0000FF" title="Saved Price Color">
+        
+        <label for="priceFontSizeInput" style="margin-left: 5px;" data-translate-key="priceFontSizeLabel">Price Font Size:</label>
+        <input type="number" id="priceFontSizeInput" min="6" max="72" value="10" style="width: 50px;" title="Price Font Size">
+        
+        <span style="margin-left: 15px;"></span> <!-- Spacer -->
+        
+        <label for="languageSelector" data-translate-key="languageLabel">Language:</label>
+        <select id="languageSelector">
+          <option value="uk">Українська</option>
+          <option value="en">English</option>
+          <option value="it">Italiano</option>
+        </select>
+    </div>
+    <div id="mainContentArea">
+        <div id="leftSidebar">
+            <div id="thumbnailView"></div>
+        </div>
+        <div id="rightContentArea"> <!-- This now wraps pdfView -->
+            <div id="pdfView"> <!-- pdfView remains for PDF content and overlays -->
+                <canvas id="pdfCanvas"></canvas>
+                <!-- priceOverlayContainer is appended here by JS -->
+            </div>
+        </div>
+    </div>
+    <div id="logConsole">
+        <div id="uiLogConsoleContainer">
+          <textarea id="uiLogConsole" readonly rows="5" style="width: 100%; box-sizing: border-box;"></textarea>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';</script>
+    <script src="js/app.js"></script>
+    <script src="js/pdf-viewer.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/translations.js"></script>
+</body>
+</html>

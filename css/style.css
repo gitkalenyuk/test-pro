@@ -1,0 +1,272 @@
+/* --- Overall Page Setup --- */
+html, body {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    font-family: sans-serif;
+    overflow: hidden; /* Prevent body scrollbars if children are managed correctly */
+}
+
+body > div { /* Direct children of body: toolbars, main area, log console */
+    flex-shrink: 0; /* Prevent shrinking unless specified otherwise */
+}
+
+/* --- Top Bars --- */
+#pdfTopBar, #appToolbar {
+    padding: 8px 10px;
+    border-bottom: 1px solid #ccc;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#appToolbar {
+    background-color: #e8e8e8; /* Slightly different from pdfTopBar */
+}
+
+/* Specific items within toolbars */
+#pdfTopBar input[type="number"],
+#pdfTopBar input[type="text"] {
+    border: 1px solid #ccc;
+    padding: 4px;
+    text-align: right;
+    border-radius: 3px;
+}
+
+#appToolbar label {
+    margin-right: 2px;
+    font-size: 0.9em;
+}
+
+#appToolbar input[type="number"],
+#appToolbar input[type="color"] {
+    border: 1px solid #ccc;
+    padding: 4px;
+    border-radius: 3px;
+    vertical-align: middle;
+}
+
+#appToolbar input[type="color"] {
+    width: 30px;
+    height: 20px; /* Effective height will be based on padding + border */
+    padding: 2px; /* Adjust padding for color input */
+    margin-right: 5px;
+}
+
+#appToolbar input[type="number"]#priceFontSizeInput,
+#appToolbar input[type="number"]#marginInput {
+    width: 60px;
+    text-align: right;
+}
+
+#appToolbar input[type="range"]#marginSlider {
+    width: 100px;
+    vertical-align: middle;
+}
+
+
+/* --- Main Content Area --- */
+#mainContentArea {
+    display: flex;
+    flex-grow: 1; /* Takes remaining vertical space */
+    overflow: hidden; /* Important for child scrolling */
+}
+
+/* --- Left Sidebar --- */
+#leftSidebar {
+    width: 200px; /* Fixed width */
+    height: 100%; /* Fill height of mainContentArea */
+    overflow-y: auto; /* Enable vertical scrolling for thumbnails */
+    padding: 10px;
+    border-right: 1px solid #ccc;
+    background-color: #f5f5f5;
+    box-sizing: border-box;
+}
+
+#thumbnailView {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.thumbnail-canvas {
+    border: 2px solid #transparent;
+    cursor: pointer;
+    max-width: 150px;
+    height: auto;
+    object-fit: contain;
+    transition: border-color 0.2s ease-in-out;
+    margin-bottom: 5px;
+}
+
+.thumbnail-canvas:hover {
+    border-color: #337ab7;
+}
+
+.thumbnail-canvas.active-thumbnail {
+    border-color: #285e8e;
+    box-shadow: 0 0 5px rgba(40, 94, 142, 0.7);
+}
+
+.thumbnail-error {
+    width: 150px;
+    min-height: 100px;
+    background-color: #ffdddd;
+    border: 1px solid #ffaaaa;
+    color: #d8000c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 12px;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+/* --- Right Content Area (Main PDF Viewing Area) --- */
+#rightContentArea {
+    flex-grow: 1; /* Take remaining horizontal space */
+    height: 100%;
+    display: flex;
+    flex-direction: column; /* Stack PDF viewer */
+    overflow: hidden; /* Important for containing PDF viewer */
+    background-color: #e9e9e9; /* Background for the viewing area */
+}
+
+/* --- PDF Viewer Container --- */
+#pdfView {
+    flex-grow: 1; /* Allow it to take available space in rightContentArea */
+    overflow: auto; /* Enable scrolling for large PDFs / zoomed content */
+    position: relative; /* For price overlays */
+    display: flex;
+    justify-content: center; /* Center canvas horizontally if smaller */
+    align-items: center; /* Center canvas vertically if smaller - or use flex-start for top alignment */
+    padding: 20px; /* Padding around the canvas */
+    box-sizing: border-box;
+}
+
+#pdfCanvas {
+    display: block; /* Removes any default spacing for inline elements */
+    background-color: #fff; /* Canvas itself is white */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* Shadow for the "page" */
+    /* Width and height are dynamically set by JavaScript via PDF.js */
+}
+
+/* Price Overlays (ensure these are compatible with the new structure) */
+#priceOverlayContainer { /* This is appended by JS into #pdfView */
+    position: absolute;
+    top: 0; /* Relative to #pdfView's padding area, or direct if #pdfView has no padding */
+    left: 0;
+    right: 0; /* Ensure it covers the padded area if overlays are relative to #pdfView */
+    bottom: 0;
+    pointer-events: none; 
+    /* Align with #pdfCanvas. If #pdfView has padding, overlays need to account for it or be placed on canvas parent.
+       Given #pdfView has padding and centers canvas, overlays relative to #pdfView need careful coordinate transform.
+       The current JS calculates overlay positions relative to the canvas viewport, which is placed within #pdfView.
+       So, #priceOverlayContainer being absolute to #pdfView is fine.
+       It should be sized to the canvas, not #pdfView if #pdfView has padding.
+       Let's assume JS sizes this container to match the canvas, or overlays are positioned to canvas.
+       For simplicity, if #pdfView has padding, this container might not align perfectly without JS sizing.
+       Alternative: #priceOverlayContainer has same dimensions as #pdfCanvas and positioned over it.
+       The JS appends priceOverlayContainer to viewerContainer which is #pdfView.
+       It's better if #priceOverlayContainer is NOT 100% width/height of #pdfView if #pdfView has padding.
+       Let's remove width/height:100% from here, as JS will position overlays.
+    */
+}
+
+.price-overlay {
+    position: absolute; /* Positioned relative to #pdfView */
+    pointer-events: auto;
+    background-color: rgba(255, 255, 0, 0.1);
+    border: 1px dashed rgba(255, 0, 0, 0.5);
+    padding: 0 2px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: Arial, sans-serif;
+    line-height: 1.0;
+}
+
+/* --- Log Console (Fixed Bottom Bar) --- */
+#logConsole {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 150px;
+    background-color: #f0f0f0;
+    border-top: 1px solid #ccc;
+    padding: 5px;
+    z-index: 100; /* Ensure it's above other content if needed, but below popups */
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+#uiLogConsoleContainer { /* Not strictly needed if #logConsole is flex container */
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+#uiLogConsole { /* The textarea */
+    flex-grow: 1;
+    resize: vertical; /* Allow vertical resize of textarea */
+    width: 100%;
+    box-sizing: border-box;
+    font-family: monospace;
+    font-size: 12px;
+    border: 1px solid #aaa;
+    background-color: #fff;
+    color: #333;
+}
+
+/* --- General Button and Input Styling (from Turn 16/17) --- */
+button {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    background-color: #f8f8f8;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+button:hover {
+    background-color: #eee;
+}
+button:active {
+    background-color: #ddd;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+input[type="file"] { /* This is for the hidden default input */
+    /* No specific styling needed if hidden */
+}
+
+input[type="number"], input[type="text"] {
+    /* General styling for text/number inputs, some already covered by #pdfTopBar rules */
+    border-radius: 3px;
+    border: 1px solid #ccc; /* Ensure consistency */
+    padding: 4px; /* Ensure consistency */
+}
+
+/* Temporary Notification (from Turn 39) */
+.temporary-notification {
+    position: fixed;
+    background-color: rgba(51, 51, 51, 0.9);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    z-index: 2000; /* Above log console */
+    opacity: 1;
+    transition: opacity 0.5s ease-out;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    font-size: 14px;
+    max-width: 300px;
+    text-align: center;
+    pointer-events: none;
+}
